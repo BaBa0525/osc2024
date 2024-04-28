@@ -16,9 +16,17 @@ void memncpy(void *src, void *dest, size_t n) {
   }
 }
 
+int get_cur_el() {
+  size_t cur_el;
+  asm volatile("mrs %0, CurrentEL" : "=r"(cur_el));
+  return (cur_el >> 2) & 0b11;
+}
+
 void kernel_main(char *dtb_ptr) {
   /* set up serial console */
   uart_init();
+
+  uart_printf("current el: %d\n", get_cur_el());
 
   if (fdt_traversal(dtb_ptr, initrd_addr) < 0) {
     prog_hang();
