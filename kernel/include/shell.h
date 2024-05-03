@@ -2,6 +2,9 @@
 #define _SHELL_H
 
 #include "lib/int.h"
+
+#define SHELL_BUF_SIZE 256
+
 typedef struct cmd_s {
   char *name;
   char *help;

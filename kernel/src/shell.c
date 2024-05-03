@@ -73,26 +73,42 @@ void handle_line(const shell_t *s, char *line) {
 }
 
 void shell_loop(const shell_t *s) {
-  char cmd[256] = {};
+  char cmd[SHELL_BUF_SIZE] = {};
   int cmd_index = 0;
+
   while (1) {
     // prompt
     if (cmd_index == 0) {
       uart_print("$ ");
     }
 
-    // echo user input
-    char c = uart_read();
-    uart_write(c);
+    for (; cmd_index < SHELL_BUF_SIZE;) {
+      // echo user input
+      char c = uart_read();
 
-    cmd[cmd_index++] = c;
+      // consume input until newline
+      if (c == '\n') {
+        uart_write(c);
+        break;
+      }
 
-    // consume input until newline
-    if (c != '\n') {
-      continue;
+      switch (c) {
+        /* backspace */
+        case 0x7f: {
+          uart_printf("\b \b");
+          cmd_index--;
+          cmd[cmd_index] = 0;
+          break;
+        }
+        default: {
+          uart_write(c);
+          cmd[cmd_index++] = c;
+          break;
+        }
+      }
     }
 
-    cmd[cmd_index - 1] = '\0';
+    cmd[cmd_index] = '\0';
     handle_line(s, cmd);
 
     cmd_index = 0;
