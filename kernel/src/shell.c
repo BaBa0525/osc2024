@@ -38,6 +38,12 @@ void register_cmds(shell_t *s) {
                       .name = "cat",
                       .execute = cat_file,
                   });
+
+  register_cmd(s, (cmd_t){
+                      .help = "execute program",
+                      .name = "exec",
+                      .execute = execute_program,
+                  });
 }
 
 void handle_line(const shell_t *s, char *line) {

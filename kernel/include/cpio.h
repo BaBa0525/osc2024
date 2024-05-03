@@ -23,8 +23,10 @@ typedef struct cpio_new_ascii_header {
 typedef struct cpio_entry {
   char *filename;
   char *content;
+  size_t content_size;
 } cpio_entry_t;
 
+/* internal use */
 typedef struct cpio_stat {
   char *filename;
   size_t filename_size;
@@ -43,5 +45,13 @@ void file_iter_next(file_iter_t *cur);
 file_iter_t cpio_list();
 
 cpio_stat_t parse_header(cpio_header_t *header);
+
+/**
+ * return
+ * - 1: succeed
+ * - 0: filename not found
+ * - -1: filesize is greater than the `buf_size`
+ */
+int get_file_content(char *filename, char *buf, size_t buf_size);
 
 #endif  // _CPIO_H

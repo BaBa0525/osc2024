@@ -6,4 +6,6 @@
 void list_files();
 void cat_file(char *args, size_t n);
 
+void execute_program(char *args, size_t n);
+
 #endif  // _FILE_H
