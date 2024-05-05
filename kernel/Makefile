@@ -8,8 +8,9 @@ OBJ_DIR = obj
 SUB_DIR = command
 
 SRC_FILES= $(shell find $(SRC_DIR) -type f -name "*.c")
+ASM_FILES= $(shell find $(SRC_DIR) -type f -name "*.S")
 # for files in SRC_FILES, turn them from src/*.c to obj/*.o
-OBJ_FILES = $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+OBJ_FILES = $(SRC_FILES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.c.o) $(ASM_FILES:$(SRC_DIR)/%.S=$(OBJ_DIR)/%.S.o)
 OBJ_FILES += $(OBJ_DIR)/start.o
 
 DEP_FILES = $(OBJ_FILES:%.o=%.d)
@@ -53,7 +54,11 @@ $(OBJ_DIR)/start.o: start.S
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.c.o: $(SRC_DIR)/%.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+	
+$(OBJ_DIR)/%.S.o: $(SRC_DIR)/%.S
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 

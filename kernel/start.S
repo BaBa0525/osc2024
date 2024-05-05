@@ -9,6 +9,8 @@ _start:
 
 	bl from_el2_to_el1
 
+	bl set_vbar_el1
+
 	// read cpu id, stop slave cores
 	// the last 8 bits indicate the core number in cortex-a53
 	mrs x1, mpidr_el1

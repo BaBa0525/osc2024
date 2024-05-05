@@ -30,8 +30,6 @@ void execute_program(char *args, size_t n) {
   char filename[256];
   strtok(args, filename, n, ' ');
 
-  uart_printf("filename: %s\n", filename);
-
   char content[4096];
   int res = get_file_content(filename, content, 4096);
 
