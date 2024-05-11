@@ -1,35 +1,49 @@
 .section ".text.exception"
 
-
 .balign  0x800
 .global exception_vector_table
 exception_vector_table:
+	/* exception from current EL while using SP_EL0 */
+	.org 0x000
 	b exception_handler
-	.balign 0x80
+	.org 0x080
 	b exception_handler
-	.balign 0x80
+	.org 0x100
 	b exception_handler
-	.balign 0x80
+	.org 0x180
 	b exception_handler
-	.balign 0x80
 
-	b exception_handler
-	.balign 0x80
-	b exception_handler
-	.balign 0x80
-	b exception_handler
-	.balign 0x80
-	b exception_handler
-	.balign 0x80
 
+	/* exception from current EL while using SP_ELx */
+	.org 0x200
 	b exception_handler
-	.balign 0x80
+	.org 0x280
+	b irq_handler 
+	.org 0x300
 	b exception_handler
-	.balign 0x80
+	.org 0x380
 	b exception_handler
-	.balign 0x80
+
+	/* exception from lower EL while at least one lower EL is AArch64 */
+	.org 0x400
 	b exception_handler
-	.balign 0x80
+	.org 0x480
+	b irq_handler 
+	.org 0x500
+	b exception_handler
+	.org 0x580
+	b exception_handler
+
+	/* exception from lower EL while all lower ELs are AArch32 */
+	.org 0x600
+	b exception_handler
+	.org 0x680
+	b exception_handler
+	.org 0x700
+	b exception_handler
+	.org 0x780
+	b exception_handler
+	.org 0x800
 
 .global set_vbar_el1
 set_vbar_el1:
@@ -82,5 +96,11 @@ set_vbar_el1:
 exception_handler:
 	save_all
 	bl exception_handler_c
+	load_all
+	eret
+
+irq_handler:
+	save_all
+	bl irq_handler_c
 	load_all
 	eret

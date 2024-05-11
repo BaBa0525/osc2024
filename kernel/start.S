@@ -11,6 +11,9 @@ _start:
 
 	bl set_vbar_el1
 
+	/* enable core timer in el0*/
+	bl core_timer_enable
+
 	// read cpu id, stop slave cores
 	// the last 8 bits indicate the core number in cortex-a53
 	mrs x1, mpidr_el1

@@ -23,6 +23,23 @@ void exception_handler_c() {
 
   for (;;) {
   }
+}
 
-  return;
+void irq_handler_c() {
+  uart_printf("IRQ Handler!\n");
+
+  u64_t cntpct_el0;
+  asm volatile("mrs %0, cntpct_el0" : "=r"(cntpct_el0));
+
+  u64_t cntfrq_el0;
+  asm volatile("mrs %0, cntfrq_el0" : "=r"(cntfrq_el0));
+
+  u64_t boot_time = cntpct_el0 / cntfrq_el0;
+  uart_printf("boot time: %d seconds\n", boot_time);
+
+  u64_t next_timeout = 2;
+  asm volatile("msr cntp_tval_el0, %0" ::"r"(next_timeout));
+
+  for (;;) {
+  }
 }
