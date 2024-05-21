@@ -4,6 +4,8 @@
 #include "int.h"
 
 void uart_init();
+void uart_async(int use);
+
 void uart_write(unsigned int c);
 
 /* Receive a character */

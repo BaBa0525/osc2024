@@ -5,66 +5,88 @@
 #include "utils.h"
 
 /* Auxilary mini UART registers */
-#define AUX_ENABLE ((volatile unsigned int *)(MMIO_BASE + 0x00215004))
-#define AUX_MU_IO ((volatile unsigned int *)(MMIO_BASE + 0x00215040))
-#define AUX_MU_IER ((volatile unsigned int *)(MMIO_BASE + 0x00215044))
-#define AUX_MU_IIR ((volatile unsigned int *)(MMIO_BASE + 0x00215048))
-#define AUX_MU_LCR ((volatile unsigned int *)(MMIO_BASE + 0x0021504C))
-#define AUX_MU_MCR ((volatile unsigned int *)(MMIO_BASE + 0x00215050))
-#define AUX_MU_LSR ((volatile unsigned int *)(MMIO_BASE + 0x00215054))
-#define AUX_MU_MSR ((volatile unsigned int *)(MMIO_BASE + 0x00215058))
-#define AUX_MU_SCRATCH ((volatile unsigned int *)(MMIO_BASE + 0x0021505C))
-#define AUX_MU_CNTL ((volatile unsigned int *)(MMIO_BASE + 0x00215060))
-#define AUX_MU_STAT ((volatile unsigned int *)(MMIO_BASE + 0x00215064))
-#define AUX_MU_BAUD ((volatile unsigned int *)(MMIO_BASE + 0x00215068))
+#define AUX_ENABLE ((vaddr_t *)(MMIO_BASE + 0x00215004))
+#define AUX_MU_IO ((vaddr_t *)(MMIO_BASE + 0x00215040))
+#define AUX_MU_IER ((vaddr_t *)(MMIO_BASE + 0x00215044))
+#define AUX_MU_IIR ((vaddr_t *)(MMIO_BASE + 0x00215048))
+#define AUX_MU_LCR ((vaddr_t *)(MMIO_BASE + 0x0021504C))
+#define AUX_MU_MCR ((vaddr_t *)(MMIO_BASE + 0x00215050))
+#define AUX_MU_LSR ((vaddr_t *)(MMIO_BASE + 0x00215054))
+#define AUX_MU_MSR ((vaddr_t *)(MMIO_BASE + 0x00215058))
+#define AUX_MU_SCRATCH ((vaddr_t *)(MMIO_BASE + 0x0021505C))
+#define AUX_MU_CNTL ((vaddr_t *)(MMIO_BASE + 0x00215060))
+#define AUX_MU_STAT ((vaddr_t *)(MMIO_BASE + 0x00215064))
+#define AUX_MU_BAUD ((vaddr_t *)(MMIO_BASE + 0x00215068))
+
+#define RX_INTERRUPT 0x01
+#define TX_INTERRUPT 0x02
+
+#define ENABLE_IRQS_1 ((vaddr_t *)(MMIO_BASE + 0xB210))
+#define AUX_INT (1 << 29)
+
+void uart_async(int use) {
+  /* enable uart interrupt */
+  if (use) {
+    u32_t ier = mem_get32(AUX_MU_IER);
+
+    ier |= RX_INTERRUPT;
+    mem_set32(AUX_MU_IER, ier);
+
+    /* enable second level interrupt controller */
+    u32_t enable_irqs_1 = mem_get32(ENABLE_IRQS_1);
+    mem_set32(ENABLE_IRQS_1, enable_irqs_1 | AUX_INT);
+  }
+};
 
 void uart_init() {
-  // function selector
+  /* function selector */
   register unsigned int selector;
 
   /* map UART1 to GPIO pins */
-  selector = *GPFSEL1;
+  selector = mem_get32(GPFSEL1);
 
-  // clean gpio14, gpio15
-  // SEL0 -> 1-10, SEL1 -> 11-20
+  /*
+   * clean gpio14, gpio15
+   * SEL0 -> 1-10, SEL1 -> 11-20
+   */
   selector &= ~((7 << 12) | (7 << 15));
 
-  // alt5
+  /* alt5 because we use mini uart */
   selector |= (2 << 12) | (2 << 15);
 
-  *GPFSEL1 = selector;
+  mem_set32(GPFSEL1, selector);
 
-  // enable pins 14 and 15
-  *GPPUD = 0;
+  /* enable pins 14 and 15 */
+  mem_set32(GPPUD, 0);
   wait_cycles(150);
 
-  *GPPUDCLK0 = (1 << 14) | (1 << 15);
+  mem_set32(GPPUDCLK0, 1 << 14 | 1 << 15);
   wait_cycles(150);
 
-  // flush GPIO setup
-  *GPPUDCLK0 = 0;
+  /* flush GPIO setup */
+  mem_set32(GPPUDCLK0, 0);
 
   /* initialize UART */
-  // enable mini uart
-  *AUX_ENABLE |= 1;
+  /* enable mini uart */
+  mem_set32(AUX_ENABLE, mem_get32(AUX_ENABLE) | 1);
 
-  // disable transmitter and receiver during configuration
-  *AUX_MU_CNTL = 0;
+  /* disable transmitter and receiver during configuration */
+  mem_set32(AUX_MU_CNTL, 0);
 
-  // disable interrupt
-  *AUX_MU_IER = 0;
+  /* disable interrupt */
+  mem_set32(AUX_MU_IER, 0);
 
-  // set the data size to 8 bit
-  *AUX_MU_LCR = 3;
+  /* set the data size to 8 bit */
+  mem_set32(AUX_MU_LCR, 3);
 
-  // do not nedd auto flow control
-  *AUX_MU_MCR = 0;
+  /* do not nedd auto flow control */
+  mem_set32(AUX_MU_MCR, 0);
 
-  // set baud rate to 115200
-  *AUX_MU_BAUD = 270;
+  /* set baud rate to 115200 */
+  mem_set32(AUX_MU_BAUD, 270);
 
-  *AUX_MU_IIR = 6;
-  *AUX_MU_CNTL = 3;  // enable Tx, Rx
+  mem_set32(AUX_MU_IIR, 6);
+  mem_set32(AUX_MU_CNTL, 3); /* enable Tx, Rx */
 }
 
 void uart_write(unsigned int c) {
