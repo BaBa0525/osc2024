@@ -12,7 +12,7 @@ _start:
 	bl set_vbar_el1
 
 	/* enable core timer in el0*/
-	bl core_timer_enable
+	// bl core_timer_enable
 
 	// read cpu id, stop slave cores
 	// the last 8 bits indicate the core number in cortex-a53
@@ -31,7 +31,26 @@ from_el2_to_el1:
 	msr hcr_el2, x0
 
 	// EL1h(SP_SEL = 1) and disable interrupt
-	mov x0, 0x3c5
+	/*
+	 * ref: 
+	 * https://developer.arm.com/documentation/ddi0595/2021-03/AArch64-Registers/SPSR-EL2--Saved-Program-Status-Register--EL2-
+	 * https://developer.arm.com/documentation/100933/0100/Processor-state-in-exception-handling
+	 * 3
+	 * |_1 -- Debug exception mask.
+	 * |_1 -- A: SError.
+	 * 
+	 * 4
+	 * |_0 -- I: IRQ interrupt mask. We want to enable interrupt in EL1, so set it to 0.
+	 * |_1 -- F: FIQ interrupt mask.
+	 * |_0 -- Bit: Reserved.
+	 * |_0 -- Execution state.
+	 *
+	 * 5
+	 * |_01 -- EL.
+	 * |_0  -- Reserved.
+	 * |_1  -- SP: current EL(SP_EL1)
+	 */
+	mov x0, 0x345
 	msr spsr_el2, x0
 
 	msr elr_el2, lr

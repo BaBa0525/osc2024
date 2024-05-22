@@ -25,11 +25,18 @@ int get_cur_el() {
 void kernel_main(char *dtb_ptr) {
   /* set up serial console */
   uart_init();
+  // uart_async(1);
+
+  uart_enable_interrupt();
 
   uart_printf("current el: %d\n", get_cur_el());
 
   if (fdt_traversal(dtb_ptr, initrd_addr) < 0) {
     prog_hang();
+  }
+
+  while (1) {
+    asm volatile("nop");
   }
 
   /* say hello (test malloc) */

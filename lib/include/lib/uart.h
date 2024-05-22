@@ -5,6 +5,7 @@
 
 void uart_init();
 void uart_async(int use);
+void uart_enable_interrupt();
 
 void uart_write(unsigned int c);
 

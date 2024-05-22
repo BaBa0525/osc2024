@@ -1,7 +1,9 @@
 #include "exception/handler.h"
 
+#include "lib/gpio.h"
 #include "lib/int.h"
 #include "lib/uart.h"
+#include "lib/utils.h"
 
 void exception_handler_c() {
   uart_printf("Exception Handler!\n");
@@ -25,8 +27,15 @@ void exception_handler_c() {
   }
 }
 
+#define AUX_MU_IO ((vaddr_t *)(MMIO_BASE + 0x00215040))
+
 void irq_handler_c() {
   uart_printf("IRQ Handler!\n");
+
+  char c = mem_get32(AUX_MU_IO);
+  uart_write(c);
+
+  return;
 
   u64_t cntpct_el0;
   asm volatile("mrs %0, cntpct_el0" : "=r"(cntpct_el0));
