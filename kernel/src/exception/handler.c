@@ -1,7 +1,7 @@
 #include "exception/handler.h"
 
-#include "lib/gpio.h"
 #include "lib/int.h"
+#include "lib/mmio.h"
 #include "lib/uart.h"
 #include "lib/utils.h"
 

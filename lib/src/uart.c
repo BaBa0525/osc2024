@@ -1,22 +1,8 @@
 #include "uart.h"
 
-#include "gpio.h"
 #include "io.h"
+#include "mmio.h"
 #include "utils.h"
-
-/* Auxilary mini UART registers */
-#define AUX_ENABLE ((vaddr_t *)(MMIO_BASE + 0x00215004))
-#define AUX_MU_IO ((vaddr_t *)(MMIO_BASE + 0x00215040))
-#define AUX_MU_IER ((vaddr_t *)(MMIO_BASE + 0x00215044))
-#define AUX_MU_IIR ((vaddr_t *)(MMIO_BASE + 0x00215048))
-#define AUX_MU_LCR ((vaddr_t *)(MMIO_BASE + 0x0021504C))
-#define AUX_MU_MCR ((vaddr_t *)(MMIO_BASE + 0x00215050))
-#define AUX_MU_LSR ((vaddr_t *)(MMIO_BASE + 0x00215054))
-#define AUX_MU_MSR ((vaddr_t *)(MMIO_BASE + 0x00215058))
-#define AUX_MU_SCRATCH ((vaddr_t *)(MMIO_BASE + 0x0021505C))
-#define AUX_MU_CNTL ((vaddr_t *)(MMIO_BASE + 0x00215060))
-#define AUX_MU_STAT ((vaddr_t *)(MMIO_BASE + 0x00215064))
-#define AUX_MU_BAUD ((vaddr_t *)(MMIO_BASE + 0x00215068))
 
 #define RX_INTERRUPT 0x01
 #define TX_INTERRUPT 0x02
@@ -26,10 +12,10 @@
 
 void uart_enable_interrupt() {
   // Enable RX and TX interrupt for mini UART
-  u32_t ier = mem_get32(AUX_MU_IER);
+  u32_t ier = mem_get32(AUX_MU_IER_REG);
   ier |= RX_INTERRUPT;
   // ier |= (RX_INTERRUPT_BIT | TX_INTERRUPT_BIT);
-  mem_set32(AUX_MU_IER, ier);
+  mem_set32(AUX_MU_IER_REG, ier);
 
   // Enable the mini UART interrupt in the second-level interrupt controller
   mem_set32(ENABLE_IRQS_1, 1 << 29);
@@ -38,11 +24,11 @@ void uart_enable_interrupt() {
 void uart_async(int use) {
   /* enable uart interrupt */
   if (use) {
-    u32_t ier = mem_get32(AUX_MU_IER);
+    u32_t ier = mem_get32(AUX_MU_IER_REG);
 
     ier |= (RX_INTERRUPT | TX_INTERRUPT);
-    mem_set32(AUX_MU_IER, ier);
-    uart_printf("ier: %x\n", mem_get32(AUX_MU_IER));
+    mem_set32(AUX_MU_IER_REG, ier);
+    uart_printf("ier: %x\n", mem_get32(AUX_MU_IER_REG));
 
     /* enable second level interrupt controller */
     u32_t enable_irqs_1 = mem_get32(ENABLE_IRQS_1);
@@ -81,34 +67,34 @@ void uart_init() {
 
   /* initialize UART */
   /* enable mini uart */
-  mem_set32(AUX_ENABLE, mem_get32(AUX_ENABLE) | 1);
+  mem_set32(AUX_ENABLES, mem_get32(AUX_ENABLES) | 1);
 
   /* disable transmitter and receiver during configuration */
-  mem_set32(AUX_MU_CNTL, 0);
+  mem_set32(AUX_MU_CNTL_REG, 0);
 
   /* disable interrupt */
-  mem_set32(AUX_MU_IER, 0);
+  mem_set32(AUX_MU_IER_REG, 0);
 
   /* set the data size to 8 bit */
-  mem_set32(AUX_MU_LCR, 3);
+  mem_set32(AUX_MU_LCR_REG, 3);
 
   /* do not nedd auto flow control */
-  mem_set32(AUX_MU_MCR, 0);
+  mem_set32(AUX_MU_MCR_REG, 0);
 
   /* set baud rate to 115200 */
-  mem_set32(AUX_MU_BAUD, 270);
+  mem_set32(AUX_MU_BAUD_REG, 270);
 
-  mem_set32(AUX_MU_IIR, 6);
-  mem_set32(AUX_MU_CNTL, 3); /* enable Tx, Rx */
+  mem_set32(AUX_MU_IIR_REG, 6);
+  mem_set32(AUX_MU_CNTL_REG, 3); /* enable Tx, Rx */
 }
 
 void uart_write(unsigned int c) {
   // wait until we can send
   do {
     asm volatile("nop");
-  } while (!(*AUX_MU_LSR & 0x20));
+  } while (!(*AUX_MU_LSR_REG & 0x20));
   // write char to the buffer
-  *AUX_MU_IO = c;
+  *AUX_MU_IO_REG = c;
 }
 
 char uart_read_raw() {
@@ -116,9 +102,9 @@ char uart_read_raw() {
   // wait until something is in the buffer
   do {
     asm volatile("nop");
-  } while (!(*AUX_MU_LSR & 0x01));
+  } while (!(*AUX_MU_LSR_REG & 0x01));
 
-  r = (char)(*AUX_MU_IO);
+  r = (char)(*AUX_MU_IO_REG);
 
   return r;
 }

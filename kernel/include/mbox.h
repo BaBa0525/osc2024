@@ -1,7 +1,7 @@
 #ifndef _MBOX_H
 #define _MBOX_H
 
-#include "lib/gpio.h"
+#include "lib/mmio.h"
 #include "lib/uart.h"
 
 #define MBOX_BASE (MMIO_BASE + 0xB880)
