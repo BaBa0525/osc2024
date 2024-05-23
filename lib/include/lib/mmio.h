@@ -3,6 +3,13 @@
 
 #include "utils.h"
 
+/*
+ * There is a VideoCore/ARM MMU translating physical addresses to bus addresses.
+ * The MMU maps physical address 0x3f000000 to bus address 0x7e000000. In your
+ * code, you should use physical addresses instead of bus addresses. However,
+ * the reference uses bus addresses. You should translate them into physical
+ * one.
+ */
 #define MMIO_BASE 0x3F000000
 
 /* gpio */
@@ -74,5 +81,36 @@
 #define AUX_MU_CNTL_REG ((vaddr_t *)(MMIO_BASE + 0x00215060))
 #define AUX_MU_STAT_REG ((vaddr_t *)(MMIO_BASE + 0x00215064))
 #define AUX_MU_BAUD_REG ((vaddr_t *)(MMIO_BASE + 0x00215068))
+
+/* ARM interrupt registers */
+
+#define IER_REG_BASE (MMIO_BASE + 0xB000)
+
+#define IRQ_BASIC_PENDING ((vaddr_t *)(IER_REG_BASE + 0x200))
+#define IRQ_PENDIND1 ((vaddr_t *)(IER_REG_BASE + 0x204))
+#define IRQ_PENDIND2 ((vaddr_t *)(IER_REG_BASE + 0x208))
+#define FIQ_CONTROL ((vaddr_t *)(IER_REG_BASE + 0x20C))
+
+/*
+ * Set to enable IRQ source 31:0
+ * ENABLE_IRQs_1 and s_2 are used to write 1s to IRQ enable  bits. ALL other IRQ
+ * enable bits are unaffected, which means we don't need to read and or.
+ */
+#define ENABLE_IRQs_1 ((vaddr_t *)(IER_REG_BASE + 0x210))
+/* Set to enable IRQ source 63:32 */
+#define ENABLE_IRQs_2 ((vaddr_t *)(IER_REG_BASE + 0x214))
+#define ENABLE_BASIC_IRQs ((vaddr_t *)(IER_REG_BASE + 0x218))
+
+#define DISABLE_IRQs_1 ((vaddr_t *)(IER_REG_BASE + 0x21C))
+#define DISABLE_IRQs_2 ((vaddr_t *)(IER_REG_BASE + 0x220))
+#define DISABLE_BASIC_IRQs ((vaddr_t *)(IER_REG_BASE + 0x224))
+
+/*
+ * ARM peripherals interrupt sources
+ * ref: https://cs140e.sergio.bz/docs/BCM2837-ARM-Peripherals.pdf
+ * p.113
+ */
+
+#define AUX_INT 29
 
 #endif  // _MMIO_H

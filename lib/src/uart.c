@@ -7,33 +7,16 @@
 #define RX_INTERRUPT 0x01
 #define TX_INTERRUPT 0x02
 
-#define ENABLE_IRQS_1 ((vaddr_t *)(MMIO_BASE + 0xB210))
-#define AUX_INT (1 << 29)
-
-void uart_enable_interrupt() {
-  // Enable RX and TX interrupt for mini UART
-  u32_t ier = mem_get32(AUX_MU_IER_REG);
-  ier |= RX_INTERRUPT;
-  // ier |= (RX_INTERRUPT_BIT | TX_INTERRUPT_BIT);
-  mem_set32(AUX_MU_IER_REG, ier);
-
-  // Enable the mini UART interrupt in the second-level interrupt controller
-  mem_set32(ENABLE_IRQS_1, 1 << 29);
-}
-
 void uart_async(int use) {
   /* enable uart interrupt */
   if (use) {
     u32_t ier = mem_get32(AUX_MU_IER_REG);
 
-    ier |= (RX_INTERRUPT | TX_INTERRUPT);
+    ier |= (RX_INTERRUPT);
     mem_set32(AUX_MU_IER_REG, ier);
-    uart_printf("ier: %x\n", mem_get32(AUX_MU_IER_REG));
 
     /* enable second level interrupt controller */
-    u32_t enable_irqs_1 = mem_get32(ENABLE_IRQS_1);
-    mem_set32(ENABLE_IRQS_1, enable_irqs_1 | AUX_INT);
-    uart_printf("irqs1: %x\n", mem_get32(ENABLE_IRQS_1));
+    mem_set32(ENABLE_IRQs_1, 1 << AUX_INT);
   }
 };
 

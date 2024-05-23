@@ -25,9 +25,7 @@ int get_cur_el() {
 void kernel_main(char *dtb_ptr) {
   /* set up serial console */
   uart_init();
-  // uart_async(1);
-
-  uart_enable_interrupt();
+  uart_async(1);
 
   uart_printf("current el: %d\n", get_cur_el());
 
